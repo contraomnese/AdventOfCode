@@ -1,10 +1,10 @@
-package day1SecretEntrance
+package day1
 
 import java.io.File
 
 fun main() {
 
-    val file = File("src/day1SecretEntrance/input.txt")
+    val file = File("src/day1/input.txt")
     val dial = Dial(50, true)
     println(dial.position)
     try {

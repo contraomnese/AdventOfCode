@@ -1,4 +1,4 @@
-package day4PrintingDepartment
+package day4
 
 
 import java.io.File
@@ -8,7 +8,7 @@ private const val HARD_LEVEL = true
 
 fun main() {
     val time = measureTimeMillis {
-        val file = File("src/day4PrintingDepartment/input.txt")
+        val file = File("src/day4/input.txt")
         try {
             val content = file.readLines()
             val paperRollsGrid = mutableListOf<List<Cell>>()

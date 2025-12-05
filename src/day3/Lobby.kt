@@ -1,14 +1,11 @@
-package day3Lobby
+package day3
 
 import java.io.File
 import kotlin.system.measureTimeMillis
 
-private const val HARD_LEVEL = false
-
 fun main() {
     val time = measureTimeMillis {
-        val action = if (HARD_LEVEL) {  } else {  }
-        val file = File("src/day3Lobby/input.txt")
+        val file = File("src/day3/input.txt")
         try {
             val content = file.readLines()
             var sumOfJoltage = 0L

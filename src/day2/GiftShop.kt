@@ -1,4 +1,4 @@
-package day2GiftShop
+package day2
 
 import java.io.File
 import kotlin.system.measureTimeMillis
@@ -8,7 +8,7 @@ private const val HARD_LEVEL = false
 fun main() {
     val time = measureTimeMillis {
         val action = if (HARD_LEVEL) { id: String -> id.isInvalidId() } else { id: String -> id.isInvalidIdForTwiceRepeat() }
-        val file = File("src/day2GiftShop/input.txt")
+        val file = File("src/day2/input.txt")
         try {
             val content = file.readText()
             var sumOfInvalidIds = 0L
