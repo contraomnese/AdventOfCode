@@ -36,8 +36,9 @@ private fun List<List<Int>>.runBeam(beamIndexes: List<Int>): Int {
 }
 
 private fun List<List<Int>>.runBeamHard(beamIndexes: List<Int>, node: Node): Int {
-    if (this.isEmpty()) return node.visit()
+    if (this.size == 1) return node.visit()
     val newBeamIndexes = this[0].splitBeamsHard(beamIndexes, node)
+    println("Beams: ${newBeamIndexes.second}")
     return this.drop(1).runBeamHard(newBeamIndexes.second, newBeamIndexes.first)
 }
 
@@ -84,8 +85,8 @@ data class Node(val key: Int, var left: Node? = null, var right: Node? = null) {
     }
 
     fun insert(value: Int) {
-        return if (value == this.key + 1) {
-            this.right?.insert(value) ?: { this.right = Node(value) }
+
+        if (value == this.key + 1) {
             if (this.right == null) {
                 this.right = Node(value)
             } else {
@@ -98,16 +99,9 @@ data class Node(val key: Int, var left: Node? = null, var right: Node? = null) {
                 this.left!!.insert(value)
             }
         }
-        else if (value > this.key) {
-            this.right?.insert(value) ?: Unit
-        }
-        else if (value < this.key) {
-            this.left?.insert(value) ?: Unit
-        }
-        else {
-            this.right?.insert(value) ?: Unit
-            this.left?.insert(value) ?: Unit
-        }
+
+        this.left?.insert(value)
+        this.right?.insert(value)
     }
 }
 
