@@ -1,9 +1,14 @@
 package day7
 
 import java.io.File
+import java.io.FileWriter
 import kotlin.system.measureTimeMillis
 
 private const val SPLITTER_CHAR = '^'
+private const val BEAM_CHAR = '|'
+private const val VOID_CHAR = '.'
+private const val WIDTH_GRID = 140
+private const val HARD_LEVEL = false
 
 fun main() {
     val time = measureTimeMillis {
@@ -11,7 +16,17 @@ fun main() {
         try {
             val content = file.readLines()
             val splitters = mutableListOf<List<Int>>()
-            val startBeamIndexes = listOf(content.first().indexOf('S'))
+            val startBeamIndex = listOf(content.first().indexOf('S'))
+            val output = FileWriter("src/day7/output.txt", true)
+            output.use { writer ->
+                writer.write(content.first())
+                writer.append("\n")
+                for (i in 0..WIDTH_GRID) {
+                    if (i == startBeamIndex.first()) writer.append(BEAM_CHAR)
+                    else writer.append(VOID_CHAR)
+                }
+                writer.append("\n")
+            }
             for (i in 2..<content.size) {
                 if (i % 2 == 0) {
                     val splittersFormat =
@@ -19,90 +34,113 @@ fun main() {
                     splitters.add(splittersFormat)
                 } else continue
             }
-            val sumOfSplit = splitters.runBeamHard(startBeamIndexes, node = Node(startBeamIndexes.first()))
+            val sumOfSplit = splitters.runBeam(startBeamIndex)
             println("Result: $sumOfSplit")
+            if (HARD_LEVEL) computeAllOutcomes(startBeamIndex.first())
         } catch (e: Exception) {
+            throw e
             println("Error file: ${e.message}")
         }
     }
     println("Running ${time}ms")
 }
 
-private fun List<List<Int>>.runBeam(beamIndexes: List<Int>): Int {
+private typealias Emitter = Int
+private typealias Splitters = List<Int>
+private typealias Beams = Pair<Int, List<Int>>
+
+private fun List<Splitters>.runBeam(emitters: List<Emitter>): Int {
     if (this.isEmpty()) return 0
-    val newBeamIndexes = this[0].splitBeams(beamIndexes)
-    println("Beams: ${newBeamIndexes.second}")
-    return newBeamIndexes.first + this.drop(1).runBeam(newBeamIndexes.second)
+    val beams = this[0].splitBeams(emitters)
+
+    val output = FileWriter("src/day7/output.txt", true)
+
+    output.use { writer ->
+        for (i in 0..WIDTH_GRID) {
+            if (this[0].contains(i)) writer.append(SPLITTER_CHAR)
+            else if (beams.second.contains(i)) writer.append(BEAM_CHAR)
+            else writer.append(VOID_CHAR)
+        }
+        writer.append("\n")
+        for (i in 0..WIDTH_GRID) {
+            if (this[0].contains(i)) writer.append(VOID_CHAR)
+            else if (beams.second.contains(i)) writer.append(BEAM_CHAR)
+            else writer.append(VOID_CHAR)
+        }
+        writer.append("\n")
+    }
+    return beams.first + this.drop(1).runBeam(beams.second)
 }
 
-private fun List<List<Int>>.runBeamHard(beamIndexes: List<Int>, node: Node): Int {
-    if (this.size == 1) return node.visit()
-    val newBeamIndexes = this[0].splitBeamsHard(beamIndexes, node)
-    println("Beams: ${newBeamIndexes.second}")
-    return this.drop(1).runBeamHard(newBeamIndexes.second, newBeamIndexes.first)
-}
-
-private fun List<Int>.splitBeams(beamIndexes: List<Int>): Pair<Int, List<Int>> {
-    val newBeams = mutableSetOf<Int>()
-    newBeams.addAll(beamIndexes)
-    var splitCount = 0
-    this.forEach {
-        if (beamIndexes.contains(it)) {
-            newBeams.remove(it)
-            newBeams.addAll(it.splitBeam())
-            splitCount++
+private fun computeAllOutcomes(startBeamIndex: Int) {
+    val file = File("src/day7/output.txt")
+    val content = file.readLines().drop(1)
+    var outcomes = mapOf(startBeamIndex to 1L)
+    content.forEachIndexed { index, string ->
+        if (index % 2 != 0) {
+            val newOutcomes = mutableMapOf<Int, Long>()
+            string.forEachIndexed { idx, char ->
+                if (char == BEAM_CHAR) {
+                    if (idx == 0) {
+                        if (
+                            string[idx + 1] == SPLITTER_CHAR && content[index - 1][idx + 1] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx + 1)
+                    } else if (idx == WIDTH_GRID) {
+                        if (
+                            string[idx - 1] == SPLITTER_CHAR && content[index - 1][idx - 1] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx - 1)
+                    } else {
+                        if (
+                            string[idx + 1] == SPLITTER_CHAR && content[index - 1][idx + 1] == BEAM_CHAR &&
+                            string[idx - 1] == SPLITTER_CHAR && content[index - 1][idx - 1] == BEAM_CHAR &&
+                            content[index - 1][idx] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx - 1) + outcomes.getValue(idx) + outcomes.getValue(idx + 1)
+                        else if (
+                            string[idx + 1] == SPLITTER_CHAR && content[index - 1][idx + 1] == BEAM_CHAR &&
+                            string[idx - 1] == SPLITTER_CHAR && content[index - 1][idx - 1] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx - 1) + outcomes.getValue(idx + 1)
+                        else if (
+                            string[idx + 1] == SPLITTER_CHAR && content[index - 1][idx + 1] == BEAM_CHAR &&
+                            content[index - 1][idx] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx) + outcomes.getValue(idx + 1)
+                        else if (
+                            string[idx - 1] == SPLITTER_CHAR && content[index - 1][idx - 1] == BEAM_CHAR &&
+                            content[index - 1][idx] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx - 1) + outcomes.getValue(idx)
+                        else if (
+                            string[idx + 1] == SPLITTER_CHAR && content[index - 1][idx + 1] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx + 1)
+                        else if (
+                            string[idx - 1] == SPLITTER_CHAR && content[index - 1][idx - 1] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx - 1)
+                        else if (
+                            content[index - 1][idx] == BEAM_CHAR
+                        ) newOutcomes[idx] = outcomes.getValue(idx)
+                    }
+                }
+            }
+            outcomes = newOutcomes.toMap()
         }
     }
-    return splitCount to newBeams.toList()
+    println("Result hard: ${outcomes.map { it.value }.sum()}")
 }
 
-private fun List<Int>.splitBeamsHard(beamIndexes: List<Int>, node: Node): Pair<Node, List<Int>> {
-    val newBeams = mutableSetOf<Int>()
-    newBeams.addAll(beamIndexes)
+private fun Splitters.splitBeams(emitters: List<Emitter>): Beams {
+    val beams = mutableSetOf<Int>()
+    beams.addAll(emitters)
+    var splitBeamsCount = 0
     this.forEach {
-        if (beamIndexes.contains(it)) {
-            newBeams.remove(it)
-            newBeams.addAll(it.splitBeam())
+        if (emitters.contains(it)) {
+            beams.remove(it)
+            beams.addAll(it.splitBeam())
+            splitBeamsCount++
         }
     }
-    newBeams.forEach {
-        node.insert(it)
-    }
-
-    return node to newBeams.toList()
+    return splitBeamsCount to beams.toList()
 }
 
 private fun Int.splitBeam(): List<Int> {
     return listOf(this - 1, this + 1)
-}
-
-data class Node(val key: Int, var left: Node? = null, var right: Node? = null) {
-
-    fun visit(): Int {
-        val a = left?.visit() ?: 1
-        val b = right?.visit() ?: 1
-        return a + b
-    }
-
-    fun insert(value: Int) {
-
-        if (value == this.key + 1) {
-            if (this.right == null) {
-                this.right = Node(value)
-            } else {
-                this.right!!.insert(value)
-            }
-        } else if (value == this.key - 1) {
-            if (this.left == null) {
-                this.left = Node(value)
-            } else {
-                this.left!!.insert(value)
-            }
-        }
-
-        this.left?.insert(value)
-        this.right?.insert(value)
-    }
 }
 
 // 970 too low
