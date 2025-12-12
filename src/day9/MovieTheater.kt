@@ -11,22 +11,33 @@ fun main() {
         val file = File("src/day9/input.txt")
         try {
             val redQuads = file.readLines().map { it.split(",").map { it.toInt() } }
-            var maxArea = 0L
-            for (i in 0 until redQuads.size) {
-                for (j in i + 1 until redQuads.size) {
-                    val newArea = (abs(redQuads[i].first() - redQuads[j].first()) + 1) *
-                            (abs(redQuads[i].last() - redQuads[j].last()) + 1).toLong()
-                    if (newArea > maxArea) {
-                        maxArea = newArea
-                    }
-                }
-            }
-            println("Result: ${maxArea}")
+            val result = if (HARD_LEVEL) drawGreenQuads() else computeMaxAreaOfRedQuads(redQuads)
+            println("Result: $result")
         } catch (e: Exception) {
             println("Error file: ${e.message}")
         }
     }
     println("Running ${time}ms")
+}
+
+private typealias RedQuads =  List<List<Int>>
+
+private fun computeMaxAreaOfRedQuads(redQuads: RedQuads): Long {
+    var maxArea = 0L
+    for (i in 0 until redQuads.size) {
+        for (j in i + 1 until redQuads.size) {
+            val area = (abs(redQuads[i].first() - redQuads[j].first()) + 1) *
+                    (abs(redQuads[i].last() - redQuads[j].last()) + 1).toLong()
+            if (area > maxArea) {
+                maxArea = area
+            }
+        }
+    }
+    return maxArea
+}
+
+private fun drawGreenQuads() {
+
 }
 
 // 288461520 too low
